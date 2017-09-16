@@ -319,11 +319,25 @@ bool con_is_split(Con *con) {
 
 /*
  * This will only return true for containers which have some parent with
- * a tabbed / stacked parent of which they are not the currently focused child.
+ * a tabbed / stacked parent of which they are not the currently focused child,
+ * or their workspace is not visible or a container is fullscreen on their
+ * workspace that isn't a parent of the container.
  *
  */
 bool con_is_hidden(Con *con) {
     Con *current = con;
+
+    if (!workspace_is_visible(con_get_workspace(con))) {
+        return true;
+    }
+    Con *fullscreen = con_get_fullscreen_con(con_get_workspace(con), CF_OUTPUT);
+    if (fullscreen != NULL && fullscreen != con && !con_has_parent(con, fullscreen)) {
+        return true;
+    }
+    fullscreen = con_get_fullscreen_con(con_get_workspace(con), CF_GLOBAL);
+    if (fullscreen != NULL && fullscreen != con && !con_has_parent(con, fullscreen)) {
+        return true;
+    }
 
     /* ascend to the workspace level and memorize the highest-up container
      * which is stacked or tabbed. */
